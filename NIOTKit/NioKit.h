@@ -8,14 +8,12 @@
 #include <WiFiManager.h>
 #include <WiFiUdp.h>
 #include <ArduinoJson.h>
-#include <LightDependentResistor.h>
-#include <BasicStepperDriver.h>
+#include <NIO_LightDependentResistor.h>
 #include <Wire.h>  // Only needed for Arduino 1.6.5 and earlier
-#include <SSD1306.h>
-#include <DHT.h>
+#include <NIO_DHT.h>
 #include <Servo.h>
-#include <Adafruit_NeoPixel.h>
-#include <VoltMeter.h>
+#include <NIO_Adafruit_NeoPixel.h>
+#include <NIO_VoltMeter.h>
 /*****************Voltmeter********************/
 #define R1 100000
 #define R2 10000

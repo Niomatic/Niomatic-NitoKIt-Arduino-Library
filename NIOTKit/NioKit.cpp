@@ -2,7 +2,7 @@
 #include "NioKit.h"
 
 NioKit::NioKit(char*  ssid,char*  pass, IPAddress ip, int port,String wifi_mode)
-  : pixels(NUMPIXELS, NEO_GRB + NEO_KHZ800),photocell(OTHER_RESISTOR, USED_PHOTOCELL) ,DHT_sensor(),vm(R1, R2, REFERENCE)
+  : pixels(18, NEO_GRB + NEO_KHZ800),photocell(OTHER_RESISTOR, USED_PHOTOCELL) ,DHT_sensor(),vm(R1, R2, REFERENCE)
 {
   Serial.begin(115200);
   UDP_port = port;
@@ -178,7 +178,7 @@ void NioKit::Json_Parse(String json_string)
     Serial.print("   Blue:");
     Serial.print(blue);
     Serial.println("");
-    for (int i = 0; i < 5; i++)
+    for (int i = 0; i < 18; i++)
     {
       pixels.setPixelColor(i, red, green, blue); // Moderately bright green color.
       pixels.show(); // This sends the updated pixel color to the hardware.
