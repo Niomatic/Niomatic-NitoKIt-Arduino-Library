@@ -1,3 +1,4 @@
+#include "NIO_Config.h"
 #ifndef NioKit_h
 #define NioKit_h
 #include "FS.h"
@@ -24,8 +25,6 @@
 #define OTHER_RESISTOR 3300 //ohms
 #define USED_PIN A0
 #define USED_PHOTOCELL LightDependentResistor::GL5528
-/****************RGB***********************/
-#define NUMPIXELS      5 // How many NeoPixels are attached to the ESP8266
 /*******************MQ5***********************/
 //#define         MQ5                           1
 //#define         MQ5PIN                       (0)      //define which analog input channel you are going to use

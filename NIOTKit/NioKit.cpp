@@ -2,7 +2,7 @@
 #include "NioKit.h"
 
 NioKit::NioKit(char*  ssid,char*  pass, IPAddress ip, int port,String wifi_mode)
-  : pixels(18, NEO_GRB + NEO_KHZ800),photocell(OTHER_RESISTOR, USED_PHOTOCELL) ,DHT_sensor(),vm(R1, R2, REFERENCE)
+  : pixels(NUMPIXELS, NEO_GRB + NEO_KHZ800),photocell(OTHER_RESISTOR, USED_PHOTOCELL) ,DHT_sensor(),vm(R1, R2, REFERENCE)
 {
   Serial.begin(115200);
   UDP_port = port;
