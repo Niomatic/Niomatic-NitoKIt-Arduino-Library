@@ -1,12 +1,5 @@
-#include "NIO_Config.h"
-#ifndef NioKit_h
-#define NioKit_h
-#include "FS.h"
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
-#include <DNSServer.h>
-#include <ESP8266WebServer.h>
-#include <WiFiManager.h>
 #include <WiFiUdp.h>
 #include <ArduinoJson.h>
 #include <NIO_LightDependentResistor.h>
@@ -25,18 +18,18 @@
 #define OTHER_RESISTOR 3300 //ohms
 #define USED_PIN A0
 #define USED_PHOTOCELL LightDependentResistor::GL5528
+/****************RGB***********************/
+#define NUMPIXELS      18 // How many NeoPixels are attached to the ESP8266
 /*******************MQ5***********************/
 //#define         MQ5                           1
 //#define         MQ5PIN                       (0)      //define which analog input channel you are going to use
-#define         RL_VALUE_MQ5                 (1)      //define the load resistance on the board, in kilo ohms
+#define         RL_VALUE_MQ5                 (4.7)      //define the load resistance on the board, in kilo ohms //1
 #define         RO_CLEAN_AIR_FACTOR_MQ5      (6.455)  //RO_CLEAR_AIR_FACTOR=(Sensor resistance in clean air)/RO,
-
-#define         CALIBARAION_SAMPLE_TIMES     (50)    //define how many samples you are going to take in the calibration phase
+#define         CALIBARAION_SAMPLE_TIMES     (10)    //define how many samples you are going to take in the calibration phase
 #define         CALIBRATION_SAMPLE_INTERVAL  (500)   //define the time interal(in milisecond) between each samples in the
 //cablibration phase
-#define         READ_SAMPLE_INTERVAL         (50)    //define how many samples you are going to take in normal operation
-#define         READ_SAMPLE_TIMES            (5)     //define the time interal(in milisecond) between each samples in 
-
+#define         READ_SAMPLE_INTERVAL         (10)    //define how many samples you are going to take in normal operation//50
+#define         READ_SAMPLE_TIMES            (2)     //define the time interal(in milisecond) between each samples in //5
 #define         GAS_HYDROGEN                 (0)
 #define         GAS_LPG                      (1)
 #define         GAS_METHANE                  (2)
@@ -46,12 +39,12 @@
 //#define         accuracy                   (1)    //for nonlinearcurves, un comment this line and comment the above line if calculations
 /**********************************************/
 
+
 class NioKit
 {
   public:
-    NioKit(  char*  ssid, char*  pass,IPAddress ip,int port,String wifi_mode);
+    NioKit(const  char*  ssid,const char*  pass,IPAddress ip,int port,String wifi_mode);
     void setupnio();
-    static void configModeCallback (WiFiManager *myWiFiManager);
 
     void setup_DHT(int pin);
     void setup_RGB(int pin);
@@ -82,8 +75,8 @@ class NioKit
     int j_port;
     int j_index;
 
-    char* switchstate;
-    char* tchstate;
+    const char* switchstate;
+    const char* tchstate;
     /*******************Buzzer************************/
     int j_freq;
     String JsonPrint;
@@ -122,9 +115,6 @@ class NioKit
     int stoi(char ss);
 
 
-
-
-
   private:
     uint16_t UDP_port;
     char UDP_packetBuffer[UDP_TX_PACKET_MAX_SIZE];
@@ -142,14 +132,21 @@ class NioKit
     VoltMeter vm;
     /********************DHT********************/
     DHT DHT_sensor;
-
-
-
-    
-    JsonObject& parse_json_object(String json_string);
     void Json_Parse(String json_string);
+	bool Enabled_voltmeter=false;
+	bool Enabled_LDR=false;
+	bool Enabled_moisture=false;
+	bool Enabled_liqlevel=false;
+	bool Enabled_touch=false;
+	bool Enabled_Rswitch=false;
+	bool Enabled_RELAY=false;
+	bool Enabled_BUZZER=false;
+	bool Enabled_DHT=false;
+	bool Enabled_RGB=false;
+	bool Enabled_MQ5=false;
+	
+	
 
 };
 
 
-#endif

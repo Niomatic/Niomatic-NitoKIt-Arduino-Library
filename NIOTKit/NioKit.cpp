@@ -1,7 +1,7 @@
 #include "Arduino.h"
 #include "NioKit.h"
 
-NioKit::NioKit(char*  ssid,char*  pass, IPAddress ip, int port,String wifi_mode)
+NioKit::NioKit(const char*  ssid,const char*  pass, IPAddress ip, int port,String wifi_mode)
   : pixels(NUMPIXELS, NEO_GRB + NEO_KHZ800),photocell(OTHER_RESISTOR, USED_PHOTOCELL) ,DHT_sensor(),vm(R1, R2, REFERENCE)
 {
   Serial.begin(115200);
@@ -9,77 +9,67 @@ NioKit::NioKit(char*  ssid,char*  pass, IPAddress ip, int port,String wifi_mode)
   nio_ip = ip;
   Wifi_config_name = ssid;
   Wifi_config_pass = pass;
+
  if (wifi_mode == "AP")
   {
     Serial.print("Setting soft-AP configuration ... ");
     Serial.println(WiFi.softAPConfig(nio_ip, nio_gw, nio_sn) ? "Ready" : "Failed!");
-
     Serial.print("Setting soft-AP ... ");
     Serial.println(WiFi.softAP(Wifi_config_name, Wifi_config_pass) ? "Ready" : "Failed!");
-
     Serial.print("Soft-AP IP address = ");
     Serial.println(WiFi.softAPIP());
   }
   if (wifi_mode== "STA")
   {
-    WiFiManager wifiManager;
-    Serial.println("wifiManager started");
-    wifiManager.setSTAStaticIPConfig(nio_ip, nio_gw, nio_sn);
-    wifiManager.setTimeout(60);
-    configModeCallback(&wifiManager);
-    wifiManager.setAPCallback(configModeCallback);
-    if (!wifiManager.autoConnect(Wifi_config_name))
-    {
-      Serial.println("failed to connect and hit timeout");
-      ESP.reset();
-      delay(1000);
-    }
+    IPAddress _gw = IPAddress(192, 168, 1, 1);
+    IPAddress _sn = IPAddress(255, 255, 255, 0);
+    WiFi.config(nio_ip,_gw,_sn);
+    WiFi.begin(Wifi_config_name,Wifi_config_pass);
+    Serial.println(WiFi.localIP());
     Serial.println("connected.. )");
   }
     Udp.begin(UDP_port);        // start UDP server
     Serial.println(UDP_port);
-
+//#define DEBUG_VALUE(l, v) Serial.print(l); Serial.print(":"); Serial.println(v,DEC);
+//DEBUG_VALUE(3,6);
 }
 
-/*********************************************************/
-void NioKit::configModeCallback (WiFiManager *myWiFiManager)
-{
-  Serial.println("Entered config mode");
-  Serial.println(WiFi.softAPIP());
-  Serial.println(myWiFiManager->getConfigPortalSSID());
-}
 /*****************************SetupFunctions******************************/
-
-void NioKit::setupnio()
-{
-  Serial.println("Niomatic setup function begins...");
-}
-/***************/
 void NioKit::setup_voltmeter(int pin)
 {
   voltagePIN = pin;
   vm.Setup_Voltage(voltagePIN);
+   Serial.println("Voltmeter Started");
+   Enabled_voltmeter=true;
 }
 /***************/
 void NioKit::setup_LDR(int pin)
 {
   LDRpin = pin;
   photocell.setpin(LDRpin);
+   Serial.println("LDR Started");
+   Enabled_LDR=true;
 }
 /***************/
 void NioKit::setup_moisture(int pin)
 {
   MoiPIN = pin;
+   Serial.println("Moisture Started");
+   Enabled_moisture=true;
 }
 /***************/
 void NioKit::setup_liqlevel(int pin)
 {
   liqPIN = pin;
+   Serial.println("Liquid level Started");
+   Enabled_liqlevel=true;
 }
 /***************/
 void NioKit::setup_touch(int pin)
 {
   tchpin = pin;
+   Serial.println("Touch Sensor Started");
+   Enabled_touch=true;
 }
 
 /***************/
@@ -87,6 +77,8 @@ void NioKit::setup_Rswitch(int pin)
 {
   swtPIN = pin;
   pinMode(swtPIN, INPUT_PULLUP);  
+   Serial.println("Reed Switch Started");
+   Enabled_Rswitch=true;
 }
 
 /***************/
@@ -94,68 +86,73 @@ void NioKit::setup_RELAY(int pin)
 {
   RSPIN = pin;
   pinMode(RSPIN, OUTPUT);  
+   Serial.println("Relay Started");
+   Enabled_RELAY=true;
 }
 /***************/
 void NioKit::setup_BUZZER(int pin)
 { 
       bzrPIN = pin;
       pinMode(bzrPIN, OUTPUT);  
+	   Serial.println("Buzzer Started");
+	   Enabled_BUZZER=true;
 }
 /***************/
 void NioKit::setup_DHT(int pin)
 { 
     DHT_sensor.begin(pin);
-    Serial.println("DHT Sensor Starts...");   
+    Serial.println("DHT Sensor Started");
+	Enabled_DHT=true;
 }
 /***************/
 void NioKit::setup_RGB(int pin)
 {
   pixels.begin(pin);
+   Serial.println("RGB LED Started");
+   Enabled_RGB=true;
 }
 /***************/
 void NioKit::setup_MQ5(int pin)
 {
     MQ5PIN = pin;
-    Ro = 10;
+    Ro = 10; 
     Ro = MQCalibration(MQ5PIN);
-    Serial.println("MQ5 Sensor Starts...");   
+    Serial.println("MQ5 Sensor Started"); 
+Enabled_MQ5=true;	
 }  
 
 
 
 /*************************************PublicJsonParseFunction***********************************/
-JsonObject& NioKit::parse_json_object(String json_string)
-{
-  DynamicJsonBuffer jsonBuffer;
-  JsonObject& root = jsonBuffer.parseObject(json_string);
-  if (!root.success()) {
-    Serial.println("parseObject() failed");
-    //return NULL;
-  } else {
-    return root;
-  }
-}
-
 
 void NioKit::Json_Parse(String json_string)
 {
-  JsonObject& root = parse_json_object(json_string);
+	DynamicJsonBuffer jsonBuffer;
+	JsonObject& root = jsonBuffer.parseObject(json_string);
+	if (!root.success()) {
+		Serial.println("parseObject() failed");
+		//return NULL;
+	} 
+	
+  else {
   j_ask = root["ask"];
   j_port = root["port"];
   j_ask_s = j_ask;
+   Serial.print(j_ask_s);
+    Serial.print("-->> ");
   /********************/
   if (j_ask_s == "DHT")
   {
     float h = DHT_sensor.readHumidity();
     float t = DHT_sensor.readTemperature(false); //For Read temperature as Fahrenheit (isFahrenheit = true)
     if (isnan(h) || isnan(t)) {// Check if any reads failed and exit early (to try again).
+	Serial.print("DHT Error");
       return; //Failed to read from DHT sensor!
     }
     Serial.print("Temp :");
     Serial.print(t);
     Serial.print("   Humidity: ");
     Serial.print(h);
-
     Serial.println();
     StaticJsonBuffer<200> jsonBuffer;
     JsonObject& root = jsonBuffer.createObject();
@@ -164,7 +161,7 @@ void NioKit::Json_Parse(String json_string)
     root.prettyPrintTo(JsonPrint);
   }
   /********************/  
-  if (j_ask_s == "RGB")
+ else if (j_ask_s == "RGB")
   {
     j_color = root["color"];
     j_color_s = j_color; //comment this line
@@ -178,44 +175,41 @@ void NioKit::Json_Parse(String json_string)
     Serial.print("   Blue:");
     Serial.print(blue);
     Serial.println("");
-    for (int i = 0; i < 18; i++)
+    for (int i = 0; i < NUMPIXELS; i++)
     {
       pixels.setPixelColor(i, red, green, blue); // Moderately bright green color.
-      pixels.show(); // This sends the updated pixel color to the hardware.
+	  pixels.show(); // This sends the updated pixel color to the hardware.
     }
+	
    }
    /********************/
-      if (j_ask_s == "MQ5")
+   else if (j_ask_s == "MQ5")
   {
-
-    int hydrogen = MQGetGasPercentage(MQRead(MQ5PIN) / Ro, GAS_HYDROGEN);
-    int lpg = MQGetGasPercentage(MQRead(MQ5PIN) / Ro, GAS_LPG);
-    int methane = MQGetGasPercentage(MQRead(MQ5PIN) / Ro, GAS_METHANE) ;
-    int carbon_monoxide = MQGetGasPercentage(MQRead(MQ5PIN) / Ro, GAS_CARBON_MONOXIDE);
-    int alcohol = MQGetGasPercentage(MQRead(MQ5PIN) / Ro, GAS_ALCOHOL);
+  int gas_value=MQRead(MQ5PIN);
+    int hydrogen = MQGetGasPercentage(gas_value / Ro, GAS_HYDROGEN);
+    int lpg = MQGetGasPercentage(gas_value / Ro, GAS_LPG);
+    int methane = MQGetGasPercentage(gas_value / Ro, GAS_METHANE) ;
+    int carbon_monoxide = MQGetGasPercentage(gas_value / Ro, GAS_CARBON_MONOXIDE);
+    int alcohol = MQGetGasPercentage(gas_value / Ro, GAS_ALCOHOL);
     Serial.printf("Hydrogen: %d LPG: %d Methane: %d Carbon: %d Alcohol: %d ", hydrogen, lpg, methane, carbon_monoxide, alcohol);
     Serial.println();
-    StaticJsonBuffer<200> jsonBuffer;
+    DynamicJsonBuffer jsonBuffer;
     JsonObject& root = jsonBuffer.createObject();
-
-    root["hydrogen"] = hydrogen;
+    root["hyd"] = hydrogen;
     root["lpg"] = lpg;
-    root["methane"] = methane;
+    root["met"] = methane;
     root["co"] = carbon_monoxide;
-    root["Value-alcohol"] = alcohol;
+    root["alc"] = alcohol;
     root.prettyPrintTo(JsonPrint);
-
   }
    /********************/
-    if (j_ask_s == "Buzzer")
+  else if (j_ask_s == "Buzzer")
   {
-    
     int j_freq = root["freq"];
     if (j_freq == 0)
     {
       noTone(bzrPIN);
     }
-
     else
     {
       tone(bzrPIN,  j_freq);
@@ -225,7 +219,7 @@ void NioKit::Json_Parse(String json_string)
 
   }
    /********************/  
-    if (j_ask_s == "Rswitch")
+  else if (j_ask_s == "Rswitch")
   {
     pinMode(swtPIN, INPUT_PULLUP);
     int proximity = digitalRead(swtPIN);
@@ -233,16 +227,16 @@ void NioKit::Json_Parse(String json_string)
     {
 
       Serial.println("Switch is closed");
-      switchstate = "switch is closed";
+      switchstate = "1";
     }
     if (proximity == LOW) // If the pin reads low, the switch is closed.
     {
       Serial.println("Switch is open");
-      switchstate = "Switch is open";
+      switchstate = "0";
     }
 
     Serial.println();
-    StaticJsonBuffer<512> jsonBuffer;
+    StaticJsonBuffer<200> jsonBuffer;
     JsonObject& root = jsonBuffer.createObject();
   
     //root["Value-switch"] = proximity;
@@ -251,7 +245,7 @@ void NioKit::Json_Parse(String json_string)
   }
 
    /********************/
-    if (j_ask_s == "A_sensor")
+   else if (j_ask_s == "A_sensor")
   {
     int data = analogRead(A0);
     Serial.println(data);
@@ -263,7 +257,7 @@ void NioKit::Json_Parse(String json_string)
   }
 
    /********************/  
-    if (j_ask_s == "RELAY")
+   else if (j_ask_s == "RELAY")
 
   {
     j_index = root["pwr"];
@@ -282,7 +276,7 @@ void NioKit::Json_Parse(String json_string)
   }
 
    /********************/  
-  if (j_ask_s == "LDR")
+  else if (j_ask_s == "LDR")
   {
     float intensity_in_lux = photocell.getCurrentLux();
     float intensity_in_fc = LightDependentResistor::luxToFootCandles(intensity_in_lux);
@@ -295,7 +289,7 @@ void NioKit::Json_Parse(String json_string)
     root.prettyPrintTo(JsonPrint);
   }
    /********************/
-      if (j_ask_s == "Voltmeter")
+    else  if (j_ask_s == "Voltmeter")
   {
     //float datav = analogRead(A0);
     float  volt = vm.getVoltage();
@@ -307,7 +301,7 @@ void NioKit::Json_Parse(String json_string)
     root.prettyPrintTo(JsonPrint);
   }
    /********************/     
-        if (j_ask_s == "Moisture")
+       else if (j_ask_s == "Moisture")
   {
     int data = analogRead(MoiPIN);
     Serial.println(data);
@@ -318,7 +312,7 @@ void NioKit::Json_Parse(String json_string)
     root.prettyPrintTo(JsonPrint);
   }
    /********************/    
-      if (j_ask_s == "Touch")
+     else if (j_ask_s == "Touch")
   {
     pinMode(tchpin, INPUT_PULLUP);
     int statetch = digitalRead(tchpin);
@@ -326,12 +320,12 @@ void NioKit::Json_Parse(String json_string)
     {
 
       Serial.println("contact detected");
-      tchstate = "contact detected";
+      tchstate = "1";
     }
     if (statetch == LOW) // If the pin reads low, the switch is closed.
     {
       Serial.println("no contact detected");
-      tchstate = "no contact detected";
+      tchstate = "0";
     }
 
     Serial.println();
@@ -341,7 +335,7 @@ void NioKit::Json_Parse(String json_string)
     root["Value-tch"] = tchstate;
     root.prettyPrintTo(JsonPrint);
   }
-  
+ }
 }
 /*********************************ReadData************************************/
 void NioKit::read_Sensor_result()
