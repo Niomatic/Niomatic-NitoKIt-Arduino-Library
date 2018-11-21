@@ -7,7 +7,6 @@ Instructions on how to install them use this link https://www.arduino.cc/en/Guid
 | Library | Download Link |
 | ------ | ------ |
 | ESP8266 | https://github.com/esp8266/Arduino |
-| WiFi Connection manager | https://github.com/tzapu/WiFiManager |
 | JSON library | https://github.com/bblanchon/ArduinoJson |
 
 ### Example Code
