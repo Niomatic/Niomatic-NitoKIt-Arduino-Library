@@ -113,8 +113,8 @@ class NioKit
     void servoMove(uint8_t pos);
     /***********************RGB********************/
     int stoi(char ss);
-
-
+    uint32_t hsl(uint16_t ih, uint8_t is, uint8_t il);
+	uint8_t hsl_convert(float c, float t1, float t2);
   private:
     uint16_t UDP_port;
     char UDP_packetBuffer[UDP_TX_PACKET_MAX_SIZE];
