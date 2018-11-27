@@ -63,6 +63,11 @@ void loop()
 | Request Data | "RGB" | |
 | Set | "color" | Niomatic HEX Format |
 
+| Parameters | Value | Range |
+| ------ | ------ | ------ |
+| Request Data | "RGB_HSL" | |
+| Set | "hue" | 0 to 359 |
+
 ### MQ5 Gas Sensor Module
 | Parameters | Value | Range |
 | ------ | ------ | ------ |
