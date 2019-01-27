@@ -1,4 +1,5 @@
 /*--------------------------------------------------------------------
+	VERSION 2.0.1
 
   NioKit.h is part of the Niomatic NioKit library.
   NioKit is a library for NioKit educational sensor pack, easing the 
@@ -62,6 +63,7 @@ class NioKit
   public:
 	//Constructor: Wifi ssid, wifi password, specified IP address, UDP port, wifi mode station/access poin
     NioKit(const char*  m_pchSSID,const char*  m_pchPASS, IPAddress m_IP, int m_nPort,String m_strWifiMode);
+	void pubnub(const char*  m_host, const char*  m_pubKey, const char*  m_subKey, const char*  m_channel);
 
 	//Setup functions which activate a specific module
   void
@@ -77,6 +79,9 @@ class NioKit
     SetupTouch(int pin),
     SetupMq5(int pin),
 	SetupServo(int pin),
+	SetupPir(int pin),
+	SetupAnalog(int pin),
+	SetupDCmotor(int pin11,int pin12,int pin13),
     ReadSensor();
 
 	//Sets the pin for the specific module
@@ -86,8 +91,16 @@ class NioKit
 	int g_nBuzzerpin;
 	int g_nMq5pin;
 	int g_nReedpin;
+	int g_nPirpin;
+	int m_nServopin;
+	int g_nDC11pin;
+	int g_nDC12pin;
+	int g_nDC13pin;
+	int g_nAnalog;
 	
-    String g_strJsonPrint;			//Holds json information
+	
+	
+    String g_strJsonPrint;			//Holds json information as string
 
     float  g_fMq5Res;				//Holds MQ5 calibration result
 
@@ -106,7 +119,11 @@ class NioKit
     int Strtoint(char m_chStr);		//converts RGB color numbers into HEX char 
     uint32_t HSL(uint16_t ih, uint8_t is, uint8_t il);
 	uint8_t HSLConvert(float m_fC, float m_fT1, float m_fT2);
-	
+
+    const char* g_host;
+	const char* g_pubKey;
+	const char* g_subKey;
+	const char* g_channel;	
 	
 	
 	
@@ -128,15 +145,21 @@ class NioKit
 	g_bEnablebuzzer=false,
 	g_bEnabledht=false,
 	g_bEnablergb=false,
-	g_bEnablemq5=false;
-	g_bEnableservo=false;
+	g_bEnablemq5=false,
+	g_bEnableservo=false,
+	g_bEnablePubnub=false,
+	g_bEnabledcmotor=false,
+	g_bEnableanalog=false,
+	g_bEnablepir=false;
 
 	//class objects
-    WiFiUDP Udp;
-    Adafruit_NeoPixel pixels;
-    LightDependentResistor photocell;
-    VoltMeter vm;
-    DHT DHT_sensor;			
+	WiFiClient client;
+    WiFiUDP	Udp;
+    Adafruit_NeoPixel	pixels;
+    LightDependentResistor	photocell;
+    VoltMeter	vm;
+    DHT	DHT_sensor;	
+	Servo	myservo;
 
 };
 

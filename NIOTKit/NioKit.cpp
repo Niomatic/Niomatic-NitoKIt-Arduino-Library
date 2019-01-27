@@ -1,3 +1,24 @@
+/*--------------------------------------------------------------------
+	VERSION 2.0.1
+
+  NioKit.h is part of the Niomatic NioKit library.
+  NioKit is a library for NioKit educational sensor pack, easing the 
+  use of sensors provided in our pack while maintaining an understandable
+  code structure.
+
+  Niomatic is a free software: It is distributed in the hope that it will be useful,
+  time saving and efficient for user interface. NioKit library is also free and you 
+  can redistribute it and/or modify it under the terms of ... .
+  
+  
+  Written by : Ehsan Moradi, Narmin Samimian, ...
+  Date : ...
+  
+
+  --------------------------------------------------------------------*/
+
+
+
 #include "Arduino.h"
 #include "NioKit.h"
 
@@ -32,7 +53,8 @@ NioKit::NioKit(const char*  m_pchSSID,const char*  m_pchPASS, IPAddress m_IP, in
 	{
 		IPAddress _gw = IPAddress(192, 168, 1, 1);
 		IPAddress _sn = IPAddress(255, 255, 255, 0);
-		WiFi.config(m_NioIP,_gw,_sn);
+		IPAddress _dns = IPAddress(192, 168, 1, 1);
+		WiFi.config(m_NioIP,_dns,_gw,_sn);
 		WiFi.begin(Wifi_config_name,Wifi_config_pass);
 		Serial.println(WiFi.localIP());
 		Serial.println("connected.. )");
@@ -41,7 +63,19 @@ NioKit::NioKit(const char*  m_pchSSID,const char*  m_pchPASS, IPAddress m_IP, in
 	Serial.println(m_nUDPort);
 
 }
-
+/****************************pubnubconnection*****************************/
+void NioKit::pubnub(const char*  m_host, const char*  m_pubKey, const char*  m_subKey, const char*  m_channel)
+{
+  // JsonPrint.replace("\"", "'");
+  //Serial.println(JsonPrint);
+	g_host = m_host;
+	g_pubKey = m_pubKey;
+	g_subKey = m_subKey;
+	g_channel = m_channel;
+    g_bEnablePubnub = true;
+	Serial.println(g_bEnablePubnub);
+	Serial.println("pubnub is set ...");
+}
 /*****************************SetupFunctions******************************/
 void NioKit::SetupVoltmeter(int pin)
 {
@@ -64,6 +98,14 @@ void NioKit::SetupMoisture(int pin)
 	g_nMoisturepin = pin;
 	Serial.println("Moisture Started");
 	g_bEnablemoisture=true;
+}
+/***************/
+
+void NioKit::SetupAnalog(int pin)
+{
+	g_nAnalog = pin;
+	Serial.println("analog sensor Started");
+	g_bEnableanalog=true;
 }
 /***************/
 void NioKit::SetupLiqlevel(int pin)
@@ -136,7 +178,26 @@ void NioKit::SetupServo(int pin)
 	Serial.println("Servo Started");
 	g_bEnableservo=true;
 }
-
+/***************/
+void NioKit::SetupPir(int pin)
+{ 
+	g_nPirpin = pin;
+	pinMode(g_nPirpin, INPUT);
+	Serial.println("PIR Started");
+	g_bEnablepir=true;
+}
+/***************/
+void NioKit::SetupDCmotor(int pin11,int pin12,int pin13)
+{ 
+	g_nDC11pin = pin11;
+	g_nDC12pin = pin12;
+	g_nDC13pin = pin13;
+	pinMode(g_nDC11pin, OUTPUT);
+	pinMode(g_nDC12pin, OUTPUT);
+	pinMode(g_nDC13pin, OUTPUT);
+	Serial.println("DCmotor Started");
+	g_bEnabledcmotor=true;
+}
 
 
 /*************************************PublicJsonParseFunction***********************************/
@@ -181,7 +242,7 @@ void NioKit::JsonParse(String json_string)
 				JsonObject& root = jsonBuffer.createObject();
 				root["temp"] = m_fTemp;
 				root["hum"] = m_fHumid;
-				root.prettyPrintTo(g_strJsonPrint);
+				root.printTo(g_strJsonPrint);
 			}
 			else
 			{
@@ -194,11 +255,11 @@ void NioKit::JsonParse(String json_string)
 			if(g_bEnableservo == true)
 			{
 				int m_nJsonangle;
-				m_nJsonangle; = root["angle"];
+				m_nJsonangle = root["angle"];
 				uint8_t m_nServoSpeed=254;               // 255=fastest, else 255-X msec delay per single degree 
 
 
-				if (m_nJsonangle; > 180) m_nJsonangle; = 180;
+				if (m_nJsonangle > 180) m_nJsonangle = 180;
 				if (m_nServoSpeed < 255) 
 				{
 					int m_nServostate = myservo.read();
@@ -220,8 +281,8 @@ void NioKit::JsonParse(String json_string)
 					  }
 					}
 				}
-				Serial.printf("moved servo to %d\n", m_nJsonangle;);
-				myservo.write(m_nJsonangle;);
+				Serial.printf("moved servo to %d\n", m_nJsonangle);
+				myservo.write(m_nJsonangle);
 			}
 
 			  
@@ -303,7 +364,7 @@ void NioKit::JsonParse(String json_string)
 				root["met"] = m_nMethane;
 				root["co"] = m_nCarbonmonoxide;
 				root["alc"] = m_nAlcohol;
-				root.prettyPrintTo(g_strJsonPrint);
+				root.printTo(g_strJsonPrint);
 			}
 			else
 			{
@@ -358,7 +419,7 @@ void NioKit::JsonParse(String json_string)
 				JsonObject& root = jsonBuffer.createObject();
 			  
 				root["Value-on"] = m_pchSwitchState;
-				root.prettyPrintTo(g_strJsonPrint);
+				root.printTo(g_strJsonPrint);
 			}
 			else
 			{
@@ -367,7 +428,7 @@ void NioKit::JsonParse(String json_string)
 	  }
 
 	   /********************/
-		else if (m_strJsonAsk == "A_sensor")
+		else if (m_strJsonAsk == "Lqlevel")
 		{
 			if(g_bEnableliqlevel == true)
 			{	  
@@ -376,15 +437,32 @@ void NioKit::JsonParse(String json_string)
 				StaticJsonBuffer<200> jsonBuffer;
 				JsonObject& root = jsonBuffer.createObject();
 
-				root["Value-data"] = m_nAnalogdata;
-				root.prettyPrintTo(g_strJsonPrint);
+				root["Lqlevel"] = m_nAnalogdata;
+				root.printTo(g_strJsonPrint);
 			}
 			else
 			{
 				  Serial.println("liquid level is disabled...");
 			}	  	  
 		}
+	   /********************/
+		else if (m_strJsonAsk == "A_sensor")
+		{
+			if(g_bEnableanalog == true)
+			{	  
+				int m_nAnalogdata = analogRead(A0);
+				Serial.println(m_nAnalogdata);
+				StaticJsonBuffer<200> jsonBuffer;
+				JsonObject& root = jsonBuffer.createObject();
 
+				root["Value-data"] = m_nAnalogdata;
+				root.printTo(g_strJsonPrint);
+			}
+			else
+			{
+				  Serial.println("liquid level is disabled...");
+			}	  	  
+		}
 	   /********************/  
 		else if (m_strJsonAsk == "RELAY")
 		{
@@ -424,7 +502,7 @@ void NioKit::JsonParse(String json_string)
 				root["Value-lux"] = m_fIntensitylux;
 				root["Value-fc"] = m_fIntensityfc;
 
-				root.prettyPrintTo(g_strJsonPrint);
+				root.printTo(g_strJsonPrint);
 			}
 			else
 			{
@@ -443,7 +521,7 @@ void NioKit::JsonParse(String json_string)
 				JsonObject& root = jsonBuffer.createObject();
 
 				root["Value-volt"] = m_fVolt;
-				root.prettyPrintTo(g_strJsonPrint);
+				root.printTo(g_strJsonPrint);
 			}
 			else
 			{
@@ -461,7 +539,7 @@ void NioKit::JsonParse(String json_string)
 				JsonObject& root = jsonBuffer.createObject();
 
 				root["Moisture"] = m_nMoistdata;
-				root.prettyPrintTo(g_strJsonPrint);
+				root.printTo(g_strJsonPrint);
 			}
 			else
 			{
@@ -491,13 +569,77 @@ void NioKit::JsonParse(String json_string)
 				JsonObject& root = jsonBuffer.createObject();
 			  
 				root["Value-tch"] = m_nStatetouch;
-				root.prettyPrintTo(g_strJsonPrint);
+				root.printTo(g_strJsonPrint);
 			}
 			else
 			{
 				Serial.println("Touch is disabled...");
 			}	
 		}
+		else if (m_strJsonAsk == "PIR")
+		{
+			if(g_bEnablepir == true)
+			{
+				const char* m_pchPirState;
+				int m_nDetect = digitalRead(g_nPirpin);
+				if (m_nDetect == HIGH)
+				{
+					Serial.println("Motion detected!");
+					m_pchPirState = "1";
+				}
+				if (m_nDetect == LOW)
+				{
+					Serial.println("No Motion detected!");
+					m_pchPirState = "0";
+				}
+
+				Serial.println();
+				StaticJsonBuffer<200> jsonBuffer;
+				JsonObject& root = jsonBuffer.createObject();
+			  
+				root["detect"] = m_pchPirState;
+				root.printTo(g_strJsonPrint);
+			}
+			else
+			{
+				Serial.println("PIR is disabled...");
+			}	  	  
+	    }
+		else if (m_strJsonAsk == "DCmotor")
+		{
+			if(g_bEnabledcmotor == true)
+			{
+				int m_nDCindex = root["Index"];
+				const char* m_pchDCdir = root["Direction"];
+				String m_strDCdir = m_pchDCdir;
+				int m_nDCspeed = root["Speed"];
+				if (m_nDCindex == 1)
+				{
+				  analogWrite(g_nDC13pin, m_nDCspeed);
+				  if (m_strDCdir == "Right")
+				  {
+					digitalWrite(g_nDC11pin, HIGH);
+					digitalWrite(g_nDC12pin, LOW);
+				  }
+				  if (m_strDCdir == "Left")
+				  {
+					digitalWrite(g_nDC11pin, LOW);
+					digitalWrite(g_nDC12pin, HIGH);
+				  }
+				  if (m_strDCdir == "Stop")
+				  {
+					digitalWrite(g_nDC11pin, LOW);
+					digitalWrite(g_nDC12pin, LOW);
+				  }
+				}
+
+				root.printTo(g_strJsonPrint);
+			}
+			else
+			{
+				Serial.println("DCmotor is disabled...");
+			}	  	  
+	    }
 	}
 }
 /*********************************ReadData************************************/
@@ -513,8 +655,51 @@ void NioKit::ReadSensor()
 		Udp.beginPacket(Udp.remoteIP(), 48000);
 		Udp.print(g_strJsonPrint);
 		Udp.endPacket();
-		g_strJsonPrint = "";
+
 	}
+		if (g_bEnablePubnub == true)
+			if(g_strJsonPrint != "")
+			{
+		{
+		Serial.println("pubnub begins ...");
+		const int l_httpPort = 80;
+		
+		if (!client.connect(g_host, l_httpPort))
+		{
+			Serial.println("Pubnub Connection Failed");
+			g_strJsonPrint= "";
+			return;
+		}
+		g_strJsonPrint.replace("\"", "");
+		Serial.println(g_strJsonPrint);
+		Serial.println("Connected to pubnub");
+		String url = "/publish/";
+		url += g_pubKey;
+		url += "/";
+		url += g_subKey;
+		url += "/0/";
+		url += g_channel;
+		url += "/myCallback/";
+		url += "\""+g_strJsonPrint+"\"";
+
+		  
+		Serial.println(url);
+  
+		client.print(String("GET ") + url + " HTTP/1.1\r\n" +
+        "Host: " + g_host + "\r\n" + 
+        "Connection: close\r\n\r\n");
+		delay(50);
+   
+	    while(client.available())
+		{
+			String line = client.readStringUntil('\r');
+			Serial.print(line);
+		}
+		Serial.println();
+		Serial.println("Pubnub Connection Closed");
+		}
+		g_strJsonPrint = "";
+			}
 }
 /*******************************************MQ5************************************************/
 float NioKit::Mq5ResistanceCalculation(int m_nADCin)
@@ -619,7 +804,7 @@ int NioKit::Strtoint(char m_chStr)
 }
 
 
-uint32_t NioKit:: (uint16_t m_nH, uint8_t m_nS, uint8_t m_nL) 
+uint32_t NioKit:: HSL(uint16_t m_nH, uint8_t m_nS, uint8_t m_nL) 
 {
 
 	float m_fH, m_fS, m_fL, m_fTemp1, m_fTemp2, m_fTred, m_fTgreen, m_fTblue;
@@ -665,4 +850,5 @@ uint8_t NioKit::HSLConvert(float m_fColor, float m_fTemp1, float m_fTemp2)
 	else m_fColor = m_fTemp2;
 	  
 	return (uint8_t)(m_fColor*255); 
+
 }
