@@ -658,48 +658,51 @@ void NioKit::ReadSensor()
 
 	}
 		if (g_bEnablePubnub == true)
+		{
 			if(g_strJsonPrint != "")
 			{
-		{
-		Serial.println("pubnub begins ...");
-		const int l_httpPort = 80;
-		
-		if (!client.connect(g_host, l_httpPort))
-		{
-			Serial.println("Pubnub Connection Failed");
-			g_strJsonPrint= "";
-			return;
-		}
-		g_strJsonPrint.replace("\"", "");
-		Serial.println(g_strJsonPrint);
-		Serial.println("Connected to pubnub");
-		String url = "/publish/";
-		url += g_pubKey;
-		url += "/";
-		url += g_subKey;
-		url += "/0/";
-		url += g_channel;
-		url += "/myCallback/";
-		url += "\""+g_strJsonPrint+"\"";
+				{
+					Serial.println("pubnub begins ...");
+					const int l_httpPort = 80;
+					
+					if (!client.connect(g_host, l_httpPort))
+					{
+						Serial.println("Pubnub Connection Failed");
+						g_strJsonPrint= "";
+						return;
+					}
+					g_strJsonPrint.replace("\"", "");
+					Serial.println(g_strJsonPrint);
+					Serial.println("Connected to pubnub");
+					String url = "/publish/";
+					url += g_pubKey;
+					url += "/";
+					url += g_subKey;
+					url += "/0/";
+					url += g_channel;
+					url += "/myCallback/";
+					url += "\""+g_strJsonPrint+"\"";
 
-		  
-		Serial.println(url);
-  
-		client.print(String("GET ") + url + " HTTP/1.1\r\n" +
-        "Host: " + g_host + "\r\n" + 
-        "Connection: close\r\n\r\n");
-		delay(50);
-   
-	    while(client.available())
-		{
-			String line = client.readStringUntil('\r');
-			Serial.print(line);
-		}
-		Serial.println();
-		Serial.println("Pubnub Connection Closed");
+					  
+					Serial.println(url);
+			  
+					client.print(String("GET ") + url + " HTTP/1.1\r\n" +
+					"Host: " + g_host + "\r\n" + 
+					"Connection: close\r\n\r\n");
+					delay(50);
+			   
+					while(client.available())
+					{
+						String line = client.readStringUntil('\r');
+						Serial.print(line);
+					}
+					Serial.println();
+					Serial.println("Pubnub Connection Closed");
+				}
+			}
 		}
 		g_strJsonPrint = "";
-			}
+			
 }
 /*******************************************MQ5************************************************/
 float NioKit::Mq5ResistanceCalculation(int m_nADCin)
